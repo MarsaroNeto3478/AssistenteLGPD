@@ -1,0 +1,12 @@
+# Segredos
+.env
+.streamlit/secrets.toml
+
+# Índice gerado (é recriado a partir de data/)
+.chroma/
+
+# Python
+__pycache__/
+*.pyc
+.venv/
+venv/
