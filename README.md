@@ -1,107 +1,38 @@
-# [Nome do projeto]
+# Assistente LGPD (nome provisório)
 
-> Assistente que responde perguntas sobre [o seu tema] usando RAG, sempre citando o arquivo e a página de onde tirou a resposta.
+## O QUE É?
+Projeto criado com foco em aprendizado e estudo, utilizando IA para melhor desenvolvimento.
 
-**[Demo online](https://link-da-sua-demo)** · [English version](README.en.md)
+Resumo: O projeto é um RAG que contém pdfs com a regras e artigos da LGPD (Lei Geral de Proteçao de Dados Pessoais), focado em auxiliar pessoas que estão com dúvidas sobre leis, normas, boas práticas.
 
-![Demonstração](docs/demo.gif)
 
-## Resultados
+# MEU ESTUDO:
+Essa sessão será para o meu estudo, o que estou aprendendo com o projeto, novos conteúdos, ou conteúdos já vistos mas com a intenção de reforçar o que já foi visto.
 
-Avaliado com [N] perguntas reais, incluindo [N] cuja resposta não está nos documentos (para medir se o assistente inventa).
+## RAG
 
-| Configuração | Busca (página certa no top-k) | Resposta correta |
-| --- | --- | --- |
-| trechos de 400 caracteres, top-4 | [ ]% | [ ]% |
-| trechos de 800 caracteres, top-4 | [ ]% | [ ]% |
-| trechos de 1200 caracteres, top-4 | [ ]% | [ ]% |
+### O que é um RAG:
 
-[Uma ou duas frases sobre o que você aprendeu com os números. Ex.: "Trechos maiores melhoraram a busca, mas pioraram a resposta: o LLM se perdia em texto irrelevante."]
+Antes de falar sobre RAG é necessário explicar o problema por trás: Agentes de IA como ChatGPT ou Claude, aprendem com quantidade enorme de dados durante seu treinamento, após isso  o conhecimento "congela":
+Isso gera alguns problemas:
+- Desatualização: não sabe o que acontece após o treinamento;
+- Não conhece o que é privado: ele nunca leu o manual de sua empresa, seus contratos, anotações;
+- Alucinação: quando ele não sabe responder, ele inventa uma resposta que soa convincente, mas na verdade não é a resposta certa.
 
-O histórico completo está em [`evals/historico.csv`](evals/historico.csv).
+Analogia: aluno numa prova sem consultas. Ele pode usar o que memorizou. Se cair uma pergunta que ele não saiba, ele chuta ela com confiança.
 
-## Como funciona
+Com isso, veio a solução: Transformar a prova sem consulta numa com consulta.
+RAG (Retrival Augmented Generation/Geração Aumentada por Recuperação):
+R = Ele busca informações relevantes em uma base de documentos;
+A = Coloca as informações junto com a pergunta;
+G = a IA escreve usando esse material.
 
-```mermaid
-flowchart LR
-    subgraph Indexação
-        A[PDFs] --> B[Trechos] --> C[Embeddings] --> D[(Chroma)]
-    end
-    subgraph Pergunta
-        E[Pergunta] --> F[Busca top-k] --> G[LLM com os trechos] --> H[Resposta + páginas]
-    end
-    D --> F
-```
+Analogia: aluno numa prova com consulta. Ele pode ler no "livro", encontrar a página certa e responder com base nela.
 
-1. Os PDFs são lidos e divididos em trechos de ~800 caracteres, com sobreposição.
-2. Cada trecho vira um vetor com o modelo multilíngue `multilingual-e5-small` e é salvo no Chroma.
-3. A pergunta também vira vetor, e o Chroma devolve os trechos mais parecidos.
-4. O LLM recebe só esses trechos e a instrução de não usar mais nada e citar a fonte.
-
-## Decisões
-
-- **Sem LangChain:** cada etapa foi escrita à mão para entender e medir o que acontece em cada uma.
-- **Embeddings locais:** grátis, rápidos em CPU e bons em português.
-- **LLM trocável:** qualquer API no formato da OpenAI funciona (Ollama, Gemini, Groq), só mudando o `.env`.
-- [Adicione as suas decisões e o porquê de cada uma.]
-
-## Como rodar
-
-Precisa de Python 3.10 ou mais novo.
-
-```bash
-git clone https://github.com/[seu-usuario]/[repo].git
-cd [repo]
-python -m venv .venv
-source .venv/bin/activate        # Windows: .venv\Scripts\activate
-pip install -r requirements.txt
-cp .env.example .env             # Windows: copy .env.example .env
-```
-
-Coloque os PDFs em `data/`, preencha o `.env` com o seu LLM e rode:
-
-```bash
-python -m src.ingest             # cria o índice
-streamlit run app.py             # abre a interface
-python -m evals.run_eval         # roda a avaliação
-```
-
-## Estrutura
-
-```
-data/                 PDFs usados como base
-src/
-  config.py           configurações (lidas do .env)
-  ingest.py           leitura dos PDFs, divisão em trechos e criação do índice
-  embeddings.py       texto -> vetor
-  retriever.py        busca dos trechos mais parecidos
-  llm.py              chamada ao LLM
-  rag.py              pipeline completo e prompt
-app.py                interface em Streamlit
-evals/
-  perguntas.csv       perguntas de teste com página e resposta esperadas
-  run_eval.py         avaliação da busca e das respostas
-  historico.csv       resultado de cada rodada
-```
-
-## Limitações
-
-- PDFs escaneados não funcionam (não há OCR).
-- Tabelas perdem a estrutura ao virar texto.
-- Perguntas que dependem de juntar informações de muitas páginas podem ficar incompletas.
-- A nota de resposta vem de um LLM juiz, que também pode errar.
-
-## Próximos passos
-
-- [ ] [Ex.: busca híbrida (BM25 + vetorial) para melhorar perguntas com siglas]
-- [ ] [Ex.: reranking com cross-encoder]
-
-## Problemas comuns
-
-- **"Nenhum texto encontrado"**: o PDF é escaneado ou a pasta `data/` está vazia.
-- **Erro de conexão com o LLM**: o Ollama não está aberto, ou a chave/URL do `.env` está errada.
-- **Deploy no Streamlit Community Cloud sem espaço**: coloque estas duas linhas no topo do `requirements.txt` para instalar o PyTorch sem GPU, que é bem menor:
-  ```
-  --extra-index-url https://download.pytorch.org/whl/cpu
-  torch
-  ```
+## Na prática:
+Na criação do RAG temos duas partes:
+- Fase 1: Preparação: Feita apenas uma vez:
+	- A) Documentos: Aqui vamos montar a base de dados, o "livro" para ela olhar: PDFs, manuais, textos...
+	- B) Pedaços(Chunks): Aqui, dividimos/cortamos os textos em chunks, partes menores, de alguns parágrafos cada: Uma analogia é fazer fichas de resumo sobre cada assunto para a prova, é mais eficiente achar a ficha certa, em comparação de folhear várias páginas até achar a página certa; 
+	- C) Embeddings: 
+	- D)
